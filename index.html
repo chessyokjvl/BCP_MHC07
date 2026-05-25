@@ -42,7 +42,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="col">
                 <div class="card h-100 bcp-card disabled bg-light" onclick="alert('โมดูลอัคคีภัย อยู่ระหว่างการพัฒนาครับ')">
                     <div class="card-body text-center py-5">
@@ -52,22 +51,11 @@
                     </div>
                 </div>
             </div>
-
             <div class="col">
                 <div class="card h-100 bcp-card disabled bg-light" onclick="alert('โมดูลแผ่นดินไหว อยู่ระหว่างการพัฒนาครับ')">
                     <div class="card-body text-center py-5">
                         <h1 class="display-4 mb-3">🏚️</h1>
                         <h4 class="card-title fw-bold text-secondary">แผ่นดินไหว (Earthquake)</h4>
-                        <span class="badge bg-secondary">อยู่ระหว่างพัฒนา</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col">
-                <div class="card h-100 bcp-card disabled bg-light" onclick="alert('โมดูลไซเบอร์ อยู่ระหว่างการพัฒนาครับ')">
-                    <div class="card-body text-center py-5">
-                        <h1 class="display-4 mb-3">💻</h1>
-                        <h4 class="card-title fw-bold text-secondary">ภัยไซเบอร์ (Cyber Threat)</h4>
                         <span class="badge bg-secondary">อยู่ระหว่างพัฒนา</span>
                     </div>
                 </div>
@@ -125,7 +113,7 @@
                             </tr>
                         </thead>
                         <tbody id="actionTableBody">
-                            <tr><td colspan="4" class="text-center py-4">กำลังเชื่อมต่อฐานข้อมูล...</td></tr>
+                            <tr><td colspan="4" class="text-center py-4 text-muted">รอรับคำสั่งเพื่อโหลดข้อมูล...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -142,7 +130,7 @@
                             </tr>
                         </thead>
                         <tbody id="contactTableBody">
-                            <tr><td colspan="3" class="text-center py-4">กำลังเชื่อมต่อฐานข้อมูล...</td></tr>
+                            <tr><td colspan="3" class="text-center py-4 text-muted">รอรับคำสั่งเพื่อโหลดข้อมูล...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -155,13 +143,12 @@
     
     <script>
         // -------------------------------------------------------------
-        // นำ URL ที่ได้จาก Google Apps Script (Deploy ใหม่) มาใส่ตรงนี้
+        // นำ URL ที่ได้จาก Google Apps Script มาใส่ตรงนี้
         const API_URL = 'https://script.google.com/macros/s/AKfycbwrATvyeeeaF08KG93tRl3nZ0Hr9eDxK2aN_XuqEGaV0StDCfvL829QjtpReS3Gzxo/exec'; 
         // -------------------------------------------------------------
 
         let isDataLoaded = false;
 
-        // ฟังก์ชันสลับหน้าจอ (UI Routing)
         function openScenario(scenario) {
             document.getElementById('landingPage').classList.add('d-none');
             document.getElementById('commandCenter').classList.remove('d-none');
@@ -169,7 +156,9 @@
             document.getElementById('navTitle').innerText = 'ศูนย์บัญชาการ : อุทกภัย';
 
             if (!isDataLoaded) {
-                loadData(); // โหลดข้อมูลเมื่อเปิดหน้าครั้งแรกเท่านั้น
+                document.getElementById('actionTableBody').innerHTML = `<tr><td colspan="4" class="text-center py-4">กำลังเชื่อมต่อฐานข้อมูล...</td></tr>`;
+                document.getElementById('contactTableBody').innerHTML = `<tr><td colspan="3" class="text-center py-4">กำลังเชื่อมต่อฐานข้อมูล...</td></tr>`;
+                loadData(); 
             }
         }
 
@@ -180,37 +169,58 @@
             document.getElementById('navTitle').innerText = 'MHC7 : BCP Portal';
         }
 
-        // โหลดข้อมูลจาก API
         async function loadData() {
             try {
+                console.log("1. กำลังร้องขอข้อมูลจาก Backend...");
                 const response = await fetch(API_URL);
                 const data = await response.json();
                 
+                // พิมพ์ข้อมูลที่ได้จาก Sheet ออกมาดูใน Console เพื่อหาจุดบกพร่อง
+                console.log("2. ข้อมูลที่ได้รับจาก Backend:", data);
+
+                // ตรวจสอบว่า Backend แจ้ง Error กลับมาหรือไม่
+                if (data.error) {
+                    throw new Error("Backend Report Error: " + data.error);
+                }
+                
                 // 1. อัปเดต Status
-                document.getElementById('statusSelect').value = data.currentStatus.status;
-                const updateTime = data.currentStatus.updated ? new Date(data.currentStatus.updated).toLocaleString('th-TH') : 'ยังไม่มีการอัปเดต';
-                document.getElementById('lastUpdated').innerText = `อัปเดตล่าสุด: ${updateTime}`;
+                if(data.currentStatus) {
+                    document.getElementById('statusSelect').value = data.currentStatus.status;
+                    const updateTime = data.currentStatus.updated ? new Date(data.currentStatus.updated).toLocaleString('th-TH') : 'ยังไม่มีการอัปเดต';
+                    document.getElementById('lastUpdated').innerText = `อัปเดตล่าสุด: ${updateTime}`;
+                }
 
                 // 2. สร้างตาราง Action Plan
-                renderActionTable(data.actionPlan);
+                if (data.actionPlan && Array.isArray(data.actionPlan) && data.actionPlan.length > 0) {
+                    renderActionTable(data.actionPlan);
+                    console.log("3. วาดตาราง Action Plan สำเร็จ");
+                } else {
+                    document.getElementById('actionTableBody').innerHTML = `<tr><td colspan="4" class="text-center text-warning">ไม่พบข้อมูลใน Sheet 'ActionPlan' หรือ หัวตารางไม่ตรง</td></tr>`;
+                }
 
                 // 3. สร้างตาราง Contacts
-                renderContactTable(data.contacts);
+                if (data.contacts && Array.isArray(data.contacts) && data.contacts.length > 0) {
+                    renderContactTable(data.contacts);
+                    console.log("4. วาดตาราง Contacts สำเร็จ");
+                } else {
+                    document.getElementById('contactTableBody').innerHTML = `<tr><td colspan="3" class="text-center text-warning">ไม่พบข้อมูลใน Sheet 'Contacts'</td></tr>`;
+                }
 
                 isDataLoaded = true;
             } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('actionTableBody').innerHTML = `<tr><td colspan="4" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+                console.error('เกิดข้อผิดพลาดรุนแรง:', error);
+                document.getElementById('actionTableBody').innerHTML = `<tr><td colspan="4" class="text-center text-danger fw-bold">เกิดข้อผิดพลาดในการรัน Javascript: <br><span class="text-muted fs-6">${error.message}</span></td></tr>`;
             }
         }
 
-        // วาดตาราง Action Plan
         function renderActionTable(actions) {
             const tbody = document.getElementById('actionTableBody');
             tbody.innerHTML = '';
             
             actions.forEach(item => {
-                const isChecked = item.IsDone === true || item.IsDone === "TRUE" ? 'checked' : '';
+                // ป้องกันกรณี Google Sheets ส่งกลับมาเป็นคำว่า "TRUE" หรือ boolean true
+                const statusCheck = String(item.IsDone).trim().toUpperCase();
+                const isChecked = (item.IsDone === true || statusCheck === "TRUE") ? 'checked' : '';
                 const textClass = isChecked ? 'task-done' : '';
                 
                 const tr = document.createElement('tr');
@@ -219,35 +229,36 @@
                         <input class="form-check-input fs-4 shadow-sm" type="checkbox" 
                                onchange="updateTask(${item.row}, this.checked)" ${isChecked}>
                     </td>
-                    <td><span class="badge bg-secondary">${item.Phase}</span></td>
-                    <td class="${textClass} fw-bold">${item.Task}</td>
-                    <td class="${textClass}">${item.Responsible}</td>
+                    <td><span class="badge bg-secondary">${item.Phase || '-'}</span></td>
+                    <td class="${textClass} fw-bold">${item.Task || '-'}</td>
+                    <td class="${textClass}">${item.Responsible || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // วาดตาราง Contacts
         function renderContactTable(contacts) {
             const tbody = document.getElementById('contactTableBody');
             tbody.innerHTML = '';
             
             contacts.forEach(item => {
+                const phoneStr = String(item.Phone || '');
+                const cleanPhone = phoneStr.replace(/[^0-9]/g, '');
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="fw-bold">${item.Name}</td>
+                    <td class="fw-bold">${item.Name || '-'}</td>
                     <td>
-                        <a href="tel:${item.Phone.replace(/[^0-9]/g, '')}" class="btn btn-sm btn-outline-success">
-                            📞 ${item.Phone}
+                        <a href="tel:${cleanPhone}" class="btn btn-sm btn-outline-success">
+                            📞 ${phoneStr}
                         </a>
                     </td>
-                    <td><span class="badge bg-info text-dark">${item.Role}</span></td>
+                    <td><span class="badge bg-info text-dark">${item.Role || '-'}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // อัปเดตสถานะ (ยิง POST)
         async function updateStatus(newStatus) {
             document.getElementById('statusSpinner').classList.remove('d-none');
             const payload = { action: 'updateStatus', newStatus: newStatus };
@@ -257,7 +268,6 @@
             loadData(); 
         }
 
-        // อัปเดต Checkbox (ยิง POST)
         async function updateTask(row, isDone) {
             const payload = { action: 'updateTask', row: row, isDone: isDone };
             await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
