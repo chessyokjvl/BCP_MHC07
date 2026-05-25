@@ -3,28 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCP Command Center - ศูนย์สุขภาพจิตที่ 7</title>
+    <title>BCP Portal - ศูนย์สุขภาพจิตที่ 7</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
-        .card-header { font-weight: bold; }
+        .bcp-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .bcp-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .bcp-card.disabled { cursor: not-allowed; opacity: 0.7; }
         .task-done { text-decoration: line-through; color: #6c757d; }
+        .nav-tabs .nav-link { font-weight: bold; color: #495057; }
+        .nav-tabs .nav-link.active { color: #0d6efd; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-primary mb-4">
+
+    <nav class="navbar navbar-dark bg-primary shadow-sm mb-4">
         <div class="container">
-            <span class="navbar-brand mb-0 h1">ระบบบริหารแผนประคองกิจการ (BCP) - สถานการณ์อุทกภัย</span>
+            <span class="navbar-brand mb-0 h1 d-flex align-items-center">
+                <span id="navTitle">MHC7 : BCP Portal</span>
+            </span>
+            <button id="btnBack" class="btn btn-outline-light btn-sm d-none" onclick="showLandingPage()">กลับหน้าหลัก</button>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="card mb-4 shadow-sm">
+    <div id="landingPage" class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">ระบบบริหารแผนความต่อเนื่องทางธุรกิจ (BCP)</h2>
+            <p class="text-muted">เลือกระบบบัญชาการเหตุการณ์ตามประเภทภัยพิบัติ</p>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col">
+                <div class="card h-100 bcp-card border-primary" onclick="openScenario('flood')">
+                    <div class="card-body text-center py-5">
+                        <h1 class="display-4 mb-3">🌊</h1>
+                        <h4 class="card-title fw-bold text-primary">อุทกภัย (Flood)</h4>
+                        <p class="card-text text-muted">แผนรับมือเหตุระดับน้ำท่วมขังและน้ำล้นตลิ่ง</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card h-100 bcp-card disabled bg-light" onclick="alert('โมดูลอัคคีภัย อยู่ระหว่างการพัฒนาครับ')">
+                    <div class="card-body text-center py-5">
+                        <h1 class="display-4 mb-3">🔥</h1>
+                        <h4 class="card-title fw-bold text-secondary">อัคคีภัย (Fire)</h4>
+                        <span class="badge bg-secondary">อยู่ระหว่างพัฒนา</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 bcp-card disabled bg-light" onclick="alert('โมดูลแผ่นดินไหว อยู่ระหว่างการพัฒนาครับ')">
+                    <div class="card-body text-center py-5">
+                        <h1 class="display-4 mb-3">🏚️</h1>
+                        <h4 class="card-title fw-bold text-secondary">แผ่นดินไหว (Earthquake)</h4>
+                        <span class="badge bg-secondary">อยู่ระหว่างพัฒนา</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card h-100 bcp-card disabled bg-light" onclick="alert('โมดูลไซเบอร์ อยู่ระหว่างการพัฒนาครับ')">
+                    <div class="card-body text-center py-5">
+                        <h1 class="display-4 mb-3">💻</h1>
+                        <h4 class="card-title fw-bold text-secondary">ภัยไซเบอร์ (Cyber Threat)</h4>
+                        <span class="badge bg-secondary">อยู่ระหว่างพัฒนา</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="commandCenter" class="container d-none">
+        
+        <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <span>ศูนย์บัญชาการเหตุการณ์ (Command Center)</span>
+                <span>ศูนย์บัญชาการเหตุการณ์อุทกภัย</span>
                 <span id="lastUpdated" class="badge bg-secondary">กำลังโหลด...</span>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-white rounded-bottom">
                 <div class="row align-items-center">
                     <div class="col-md-3">
                         <label class="form-label fw-bold">สถานะการณ์ปัจจุบัน:</label>
@@ -38,17 +96,24 @@
                         </select>
                     </div>
                     <div class="col-md-3 text-end">
-                        <span id="statusSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></span>
+                        <span id="statusSpinner" class="spinner-border text-primary d-none" role="status"></span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card shadow-sm">
-            <div class="card-header bg-info text-white">
-                ขั้นตอนการดำเนินการเมื่อเกิดเหตุอุทกภัย (Action Plan Flowchart)
-            </div>
-            <div class="card-body p-0">
+        <ul class="nav nav-tabs" id="bcpTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="action-tab" data-bs-toggle="tab" data-bs-target="#action-pane" type="button" role="tab">📋 ขั้นตอนปฏิบัติงาน (Action Plan)</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-pane" type="button" role="tab">📞 ข้อมูลการติดต่อฉุกเฉิน (Contacts)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content bg-white border border-top-0 rounded-bottom shadow-sm mb-5" id="bcpTabsContent">
+            
+            <div class="tab-pane fade show active p-0" id="action-pane" role="tabpanel">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
@@ -65,28 +130,74 @@
                     </table>
                 </div>
             </div>
+
+            <div class="tab-pane fade p-3" id="contact-pane" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="40%">หน่วยงาน / บุคคล</th>
+                                <th width="30%">เบอร์โทรศัพท์</th>
+                                <th width="30%">ประเภท (Role)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contactTableBody">
+                            <tr><td colspan="3" class="text-center py-4">กำลังเชื่อมต่อฐานข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
         // -------------------------------------------------------------
-        // นำ URL ที่ได้จาก Google Apps Script (Deploy) มาใส่ตรงนี้
+        // นำ URL ที่ได้จาก Google Apps Script (Deploy ใหม่) มาใส่ตรงนี้
         const API_URL = 'https://script.google.com/macros/s/AKfycbwrATvyeeeaF08KG93tRl3nZ0Hr9eDxK2aN_XuqEGaV0StDCfvL829QjtpReS3Gzxo/exec'; 
         // -------------------------------------------------------------
 
-        // โหลดข้อมูลเริ่มต้น
+        let isDataLoaded = false;
+
+        // ฟังก์ชันสลับหน้าจอ (UI Routing)
+        function openScenario(scenario) {
+            document.getElementById('landingPage').classList.add('d-none');
+            document.getElementById('commandCenter').classList.remove('d-none');
+            document.getElementById('btnBack').classList.remove('d-none');
+            document.getElementById('navTitle').innerText = 'ศูนย์บัญชาการ : อุทกภัย';
+
+            if (!isDataLoaded) {
+                loadData(); // โหลดข้อมูลเมื่อเปิดหน้าครั้งแรกเท่านั้น
+            }
+        }
+
+        function showLandingPage() {
+            document.getElementById('commandCenter').classList.add('d-none');
+            document.getElementById('landingPage').classList.remove('d-none');
+            document.getElementById('btnBack').classList.add('d-none');
+            document.getElementById('navTitle').innerText = 'MHC7 : BCP Portal';
+        }
+
+        // โหลดข้อมูลจาก API
         async function loadData() {
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
                 
-                // ตั้งค่า Status
+                // 1. อัปเดต Status
                 document.getElementById('statusSelect').value = data.currentStatus.status;
                 const updateTime = data.currentStatus.updated ? new Date(data.currentStatus.updated).toLocaleString('th-TH') : 'ยังไม่มีการอัปเดต';
                 document.getElementById('lastUpdated').innerText = `อัปเดตล่าสุด: ${updateTime}`;
 
-                // สร้างตาราง Action Plan
-                renderTable(data.actionPlan);
+                // 2. สร้างตาราง Action Plan
+                renderActionTable(data.actionPlan);
+
+                // 3. สร้างตาราง Contacts
+                renderContactTable(data.contacts);
+
+                isDataLoaded = true;
             } catch (error) {
                 console.error('Error fetching data:', error);
                 document.getElementById('actionTableBody').innerHTML = `<tr><td colspan="4" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
@@ -94,7 +205,7 @@
         }
 
         // วาดตาราง Action Plan
-        function renderTable(actions) {
+        function renderActionTable(actions) {
             const tbody = document.getElementById('actionTableBody');
             tbody.innerHTML = '';
             
@@ -105,7 +216,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="text-center">
-                        <input class="form-check-input fs-4" type="checkbox" 
+                        <input class="form-check-input fs-4 shadow-sm" type="checkbox" 
                                onchange="updateTask(${item.row}, this.checked)" ${isChecked}>
                     </td>
                     <td><span class="badge bg-secondary">${item.Phase}</span></td>
@@ -116,33 +227,42 @@
             });
         }
 
-        // ยิง API เพื่ออัปเดตสถานะภาพรวม
+        // วาดตาราง Contacts
+        function renderContactTable(contacts) {
+            const tbody = document.getElementById('contactTableBody');
+            tbody.innerHTML = '';
+            
+            contacts.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="fw-bold">${item.Name}</td>
+                    <td>
+                        <a href="tel:${item.Phone.replace(/[^0-9]/g, '')}" class="btn btn-sm btn-outline-success">
+                            📞 ${item.Phone}
+                        </a>
+                    </td>
+                    <td><span class="badge bg-info text-dark">${item.Role}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // อัปเดตสถานะ (ยิง POST)
         async function updateStatus(newStatus) {
             document.getElementById('statusSpinner').classList.remove('d-none');
-            
             const payload = { action: 'updateStatus', newStatus: newStatus };
-            await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
             
             document.getElementById('statusSpinner').classList.add('d-none');
-            loadData(); // รีโหลดข้อมูลเพื่ออัปเดตเวลาล่าสุด
+            loadData(); 
         }
 
-        // ยิง API เพื่ออัปเดต Checkbox
+        // อัปเดต Checkbox (ยิง POST)
         async function updateTask(row, isDone) {
             const payload = { action: 'updateTask', row: row, isDone: isDone };
-            await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-            
-            loadData(); // รีโหลดเพื่อขีดฆ่าข้อความที่ทำเสร็จแล้ว
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            loadData(); 
         }
-
-        // เรียกโหลดข้อมูลครั้งแรกเมื่อเปิดหน้าเว็บ
-        window.onload = loadData;
     </script>
 </body>
 </html>
