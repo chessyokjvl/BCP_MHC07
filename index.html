@@ -3,122 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCP Dashboard - ศูนย์สุขภาพจิตที่ 7</title>
+    <title>BCP Command Center - ศูนย์สุขภาพจิตที่ 7</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; }
-        .status-card { border-left: 5px solid; }
-        .status-normal { border-left-color: #198754; }
-        .status-crisis { border-left-color: #dc3545; background-color: #fff3f3; }
+        body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
+        .card-header { font-weight: bold; }
+        .task-done { text-decoration: line-through; color: #6c757d; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-primary">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">MHC7 BCP Portal (อุทกภัย)</span>
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">ระบบบริหารแผนประคองกิจการ (BCP) - สถานการณ์อุทกภัย</span>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="card status-card status-normal mb-4" id="statusContainer">
+    <div class="container">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span>ศูนย์บัญชาการเหตุการณ์ (Command Center)</span>
+                <span id="lastUpdated" class="badge bg-secondary">กำลังโหลด...</span>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">สถานะปัจจุบัน: <span id="currentStatus">กำลังโหลด...</span></h5>
-                <p class="card-text text-muted" id="lastUpdated"></p>
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">สถานะการณ์ปัจจุบัน:</label>
+                    </div>
+                    <div class="col-md-6">
+                        <select id="statusSelect" class="form-select form-select-lg fw-bold" onchange="updateStatus(this.value)">
+                            <option value="ปกติ">🟢 ปกติ (Normal)</option>
+                            <option value="เฝ้าระวัง">🟡 เฝ้าระวัง (Monitoring)</option>
+                            <option value="วิกฤต">🔴 วิกฤต / อพยพ (Crisis / Evacuation)</option>
+                            <option value="ฟื้นฟู">🔵 ฟื้นฟู (Recovery)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <span id="statusSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <ul class="nav nav-tabs" id="myTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#actionPlan">แผนปฏิบัติการ (Action Plan)</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#contacts">เบอร์โทรฉุกเฉิน</button>
-            </li>
-        </ul>
-
-        <div class="tab-content bg-white p-3 border border-top-0 rounded-bottom">
-            <div class="tab-pane fade show active" id="actionPlan">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ระยะ</th>
-                            <th>กิจกรรม</th>
-                            <th>ผู้รับผิดชอบ</th>
-                            <th>สถานะ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="actionTableBody">
-                        <tr><td colspan="4" class="text-center">กำลังโหลดข้อมูล...</td></tr>
-                    </tbody>
-                </table>
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                ขั้นตอนการดำเนินการเมื่อเกิดเหตุอุทกภัย (Action Plan Flowchart)
             </div>
-
-            <div class="tab-pane fade" id="contacts">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>หน่วยงาน / บุคคล</th>
-                            <th>เบอร์โทรศัพท์</th>
-                            <th>ประเภท</th>
-                        </tr>
-                    </thead>
-                    <tbody id="contactTableBody">
-                    </tbody>
-                </table>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center" width="10%">สถานะ</th>
+                                <th width="15%">ระยะ (Phase)</th>
+                                <th width="50%">ขั้นตอนการปฏิบัติงาน (Task)</th>
+                                <th width="25%">ผู้รับผิดชอบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="actionTableBody">
+                            <tr><td colspan="4" class="text-center py-4">กำลังเชื่อมต่อฐานข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // แทนที่ด้วย Web App URL ของคุณที่ได้จาก Step 2
+        // -------------------------------------------------------------
+        // นำ URL ที่ได้จาก Google Apps Script (Deploy) มาใส่ตรงนี้
         const API_URL = 'https://script.google.com/macros/s/AKfycbwrATvyeeeaF08KG93tRl3nZ0Hr9eDxK2aN_XuqEGaV0StDCfvL829QjtpReS3Gzxo/exec'; 
+        // -------------------------------------------------------------
 
-        async function fetchStatus() {
-            const res = await fetch(`${API_URL}?action=getStatus`);
-            const data = await res.json();
-            document.getElementById('currentStatus').innerText = data.status;
-            document.getElementById('lastUpdated').innerText = `อัปเดตล่าสุด: ${new Date(data.updated).toLocaleString('th-TH')}`;
-            
-            if(data.status.includes('วิกฤต')) {
-                document.getElementById('statusContainer').classList.replace('status-normal', 'status-crisis');
-                document.getElementById('currentStatus').classList.add('text-danger', 'fw-bold');
+        // โหลดข้อมูลเริ่มต้น
+        async function loadData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                // ตั้งค่า Status
+                document.getElementById('statusSelect').value = data.currentStatus.status;
+                const updateTime = data.currentStatus.updated ? new Date(data.currentStatus.updated).toLocaleString('th-TH') : 'ยังไม่มีการอัปเดต';
+                document.getElementById('lastUpdated').innerText = `อัปเดตล่าสุด: ${updateTime}`;
+
+                // สร้างตาราง Action Plan
+                renderTable(data.actionPlan);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('actionTableBody').innerHTML = `<tr><td colspan="4" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
             }
         }
 
-        async function fetchActionPlan() {
-            const res = await fetch(`${API_URL}?action=getActionPlan`);
-            const data = await res.json();
-            let html = '';
-            data.forEach(row => {
-                html += `<tr>
-                            <td><span class="badge bg-secondary">${row.Phase}</span></td>
-                            <td>${row.Task}</td>
-                            <td>${row.Responsible}</td>
-                            <td><input class="form-check-input" type="checkbox" ${row.Status === 'Done' ? 'checked' : ''} disabled></td>
-                         </tr>`;
+        // วาดตาราง Action Plan
+        function renderTable(actions) {
+            const tbody = document.getElementById('actionTableBody');
+            tbody.innerHTML = '';
+            
+            actions.forEach(item => {
+                const isChecked = item.IsDone === true || item.IsDone === "TRUE" ? 'checked' : '';
+                const textClass = isChecked ? 'task-done' : '';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-center">
+                        <input class="form-check-input fs-4" type="checkbox" 
+                               onchange="updateTask(${item.row}, this.checked)" ${isChecked}>
+                    </td>
+                    <td><span class="badge bg-secondary">${item.Phase}</span></td>
+                    <td class="${textClass} fw-bold">${item.Task}</td>
+                    <td class="${textClass}">${item.Responsible}</td>
+                `;
+                tbody.appendChild(tr);
             });
-            document.getElementById('actionTableBody').innerHTML = html;
         }
 
-        async function fetchContacts() {
-            const res = await fetch(`${API_URL}?action=getContacts`);
-            const data = await res.json();
-            let html = '';
-            data.forEach(row => {
-                html += `<tr>
-                            <td>${row.Name}</td>
-                            <td><a href="tel:${row.Phone.replace(/[^0-9]/g, '')}">${row.Phone}</a></td>
-                            <td>${row.Role}</td>
-                         </tr>`;
+        // ยิง API เพื่ออัปเดตสถานะภาพรวม
+        async function updateStatus(newStatus) {
+            document.getElementById('statusSpinner').classList.remove('d-none');
+            
+            const payload = { action: 'updateStatus', newStatus: newStatus };
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
             });
-            document.getElementById('contactTableBody').innerHTML = html;
+            
+            document.getElementById('statusSpinner').classList.add('d-none');
+            loadData(); // รีโหลดข้อมูลเพื่ออัปเดตเวลาล่าสุด
         }
 
-        // เริ่มต้นโหลดข้อมูล
-        fetchStatus();
-        fetchActionPlan();
-        fetchContacts();
+        // ยิง API เพื่ออัปเดต Checkbox
+        async function updateTask(row, isDone) {
+            const payload = { action: 'updateTask', row: row, isDone: isDone };
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            
+            loadData(); // รีโหลดเพื่อขีดฆ่าข้อความที่ทำเสร็จแล้ว
+        }
+
+        // เรียกโหลดข้อมูลครั้งแรกเมื่อเปิดหน้าเว็บ
+        window.onload = loadData;
     </script>
 </body>
 </html>
